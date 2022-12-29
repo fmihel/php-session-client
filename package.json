@@ -1,0 +1,45 @@
+{
+  "name": "fmihel-php-session-client",
+  "version": "0.0.1",
+  "description": "client side for php-session",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build-dist && npm run build-dist-min",
+    "build-dist": "rollup -c rollup.config.js",
+    "build-dist-min": "rollup -c rollup.config.min.js",
+    "npm-publish-patch": "npm run build && npm version patch && npm publish && npm run git-push",
+    "npm-publish-minor": "npm run build && npm version minor && npm publish && npm run git-push",
+    "npm-publish-major": "npm run build && npm version major && npm publish && npm run git-push",
+    "npm-publish-beta":  "npm run build && npm publish  --tag beta",
+    "git-push": "git push origin main && git push origin main --tag"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fmihel/php-session-client.git"
+  },
+  "author": "fmihel76@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fmihel/php-session-client/issues"
+  },
+  "homepage": "https://github.com/fmihel/php-session-client#readme",
+  "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.6",
+    "@babel/preset-react": "^7.14.5",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.2.2",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-import-resolver-webpack": "^0.11.1",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-react": "^7.26.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.3.1",
+    "rollup": "^1.32.1"
+  }
+
+
+}
