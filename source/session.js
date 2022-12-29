@@ -1,88 +1,124 @@
-
-export default class Session{
-    constructor(router){
+/* eslint-disable no-underscore-dangle */
+/** клиентская часть плагина роутера, позволяет
+ * аторизовать с помощью логин/пароль или идентификатора сессии sid
+ *
+ * Ex:
+ * import router from 'fmihel-php-router-client';
+ * import Session from 'fmihel-php-session-client';
+ * let session = new Session(router);
+ *
+ * session.on('autprize',()=>{
+ *     console.log('after autorize');
+ * })
+ * session.on('logout',()=>{
+ *     console.log('after logout');
+ * })
+ *
+ * session.autorize({pass:'xxx',login:'name'});
+ *
+ * session.logout();
+ *
+ */
+export default class Session {
+    constructor(router) {
         this.private = {
-            enabled:false,
-            data:{}
-        }
+            enabled: false,
+            data: {}, // информация о сессии
+        };
         this.router = router;
 
-        this.beforeSend = this.beforeSend.bind(this);
-        this.afterSend = this.afterSend.bind(this);
-        this.events = {'autorize':[],'logout':[]};
-        this.paths = ['session/autorize','session/logout'];
-        this.router.on('before',this.beforeSend);
-        this.router.on('after',this.afterSend)
-
+        this.beforeSend = this._beforeSend.bind(this);
+        this.afterSend = this._afterSend.bind(this);
+        this.events = { autorize: [], logout: [] };
+        this.paths = ['session/autorize', 'session/logout'];
+        this.router.on('before', this._beforeSend);
+        this.router.on('after', this._afterSend);
     }
-    beforeSend(pack){
-        return {...pack,session:this.private.data};
-    }
-    afterSend(pack){
-        let {to,session} = pack;
-        if ( this.paths.indexOf(to)<0 && ( Array.isArray(session) && session.length===0)) {
-            this._clear();
 
+    /** обработчик перед отправкой,
+     * в отправляемый пакет добавляет информацию о сесси
+    */
+    _beforeSend(pack) {
+        return { ...pack, session: this.private.data };
+    }
+
+    /** обработчик сразу, как приходит информация
+     * в отправляемый пакет добавляет информацию о сесси
+    */
+    _afterSend(pack) {
+        const { to, session } = pack;
+        // если это не информация об авторизации и пакет pack.session === [] то сервер не подтвердил авторизацию
+        // и значит не производил обработку входящег пакета, и значит разрываем авторизацию
+        if (this.paths.indexOf(to) < 0 && (Array.isArray(session) && session.length === 0)) {
+            this._close();
         }
-        
         return pack;
     }
-    enabled(){
-        return this.private.enabled;
-    }
-    autorize({login,pass,sid}){
-        let t = this;
-        return t.router.send({
-            to:'session/autorize',
-            data:{
-                ...(login?{login}:{}),
-                ...(pass?{pass}:{}),
-                ...(sid?{sid: sid}:{}),
-            }
-        }).then(data=>{
-            if ('login' in data){
-                let prev = {...t.private,data:{...t.private.data}};
-                t.private.enabled = true;    
-                t.private.data = {...data};
-                if (!prev.enabled || prev.data.sid !== data.sid)
-                    t.do('autorize');
-            }else{
-                t._clear();
-                throw new Error('data is empty');
-            }
-            return data;
-        }).catch(e=>{
-            t._clear();
-            throw new Error(e);
-        })
-    }
-    _clear(){
-        if (this.private.enabled){
+
+    _close() {
+        if (this.private.enabled) {
             this.do('logout');
-            this.private.enabled = false;    
+            this.private.enabled = false;
             this.private.data = {};
             return true;
         }
         return false;
     }
-    logout(){
-        if (this._clear()){
-            this.router.send({to:'session/logout'});
-        };
+
+    /** признак, авторизованы или нет */
+    enabled() {
+        return this.private.enabled;
     }
 
-    on(event,callback){
-        let t = this;
-        if (!(event in t.events))
-            throw Error(' event="'+event+'" not in '+this.events.join(','));
-        t.events[event].push(callback);
-        return ()=>{ t.events[event] = t.events[event].filter(cb=>cb!==callback); }
+    /** запрос на авторизацию, будет обработан плагином php-session
+     * можно отправить или login и pass или sid
+    */
+    autorize({ login, pass, sid }) {
+        const t = this;
+        return t.router.send({
+            to: 'session/autorize',
+            data: {
+                ...(login ? { login } : {}),
+                ...(pass ? { pass } : {}),
+                ...(sid ? { sid } : {}),
+            },
+        }).then((data) => {
+            if ('login' in data) {
+                const prev = { ...t.private, data: { ...t.private.data } };
+                t.private.enabled = true;
+                t.private.data = { ...data };
+                if (!prev.enabled || prev.data.sid !== data.sid) t.do('autorize');
+            } else {
+                t._close();
+                throw new Error('data is empty');
+            }
+            return data;
+        }).catch((e) => {
+            t._close();
+            throw new Error(e);
+        });
     }
-    do(event,param={}){
-        let t = this;
-        t.events[event].map(callback=>{
-            callback({param,sender:t,event});
-        })
+
+    /** разрыв авторизации */
+    logout() {
+        if (this._close()) {
+            this.router.send({ to: 'session/logout' });
+        }
+    }
+
+    /** добавляет события autorize logout , возвращает метод отмены события */
+    on(event, callback) {
+        const t = this;
+        if (!(event in t.events)) throw Error(` event="${event}" not in ${this.events.join(',')}`);
+        t.events[event].push(callback);
+        return () => { t.events[event] = t.events[event].filter((cb) => cb !== callback); };
+    }
+
+    /** выполняет все сохраненные ф-ции соотвествующие событию */
+    do(event, param = {}) {
+        const t = this;
+        t.events[event].map((callback) => {
+            callback({ param, sender: t, event });
+        });
     }
 }
-
