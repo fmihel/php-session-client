@@ -2,7 +2,7 @@
   "name": "fmihel-php-session-client",
   "version": "0.0.1",
   "description": "client side for php-session",
-  "main": "index.js",
+  "main": "dist/fmihel-php-session-client.min.js",
   "scripts": {
     "build": "npm run build-dist && npm run build-dist-min",
     "build-dist": "rollup -c rollup.config.js",
