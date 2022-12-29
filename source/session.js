@@ -1,3 +1,4 @@
+/* eslint-disable array-callback-return */
 /* eslint-disable no-underscore-dangle */
 /** клиентская часть плагина роутера, позволяет
  * аторизовать с помощью логин/пароль или идентификатора сессии sid
@@ -27,8 +28,8 @@ export default class Session {
         };
         this.router = router;
 
-        this.beforeSend = this._beforeSend.bind(this);
-        this.afterSend = this._afterSend.bind(this);
+        this._beforeSend = this._beforeSend.bind(this);
+        this._afterSend = this._afterSend.bind(this);
         this.events = { autorize: [], logout: [] };
         this.paths = ['session/autorize', 'session/logout'];
         this.router.on('before', this._beforeSend);
