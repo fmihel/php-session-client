@@ -28,25 +28,23 @@ export default class Session {
         };
         this.router = router;
 
-        this._beforeSend = this._beforeSend.bind(this);
-        this._afterSend = this._afterSend.bind(this);
+        this.before = this.before.bind(this);
+        this.after = this.after.bind(this);
         this.events = { autorize: [], logout: [] };
         this.paths = ['session/autorize', 'session/logout'];
-        this.router.on('before', this._beforeSend);
-        this.router.on('after', this._afterSend);
     }
 
     /** обработчик перед отправкой,
      * в отправляемый пакет добавляет информацию о сесси
     */
-    _beforeSend(pack) {
+    before(pack) {
         return { ...pack, session: this.private.data };
     }
 
     /** обработчик сразу, как приходит информация
      * в отправляемый пакет добавляет информацию о сесси
     */
-    _afterSend(pack) {
+    after(pack) {
         const { to, session } = pack;
         // если это не информация об авторизации и пакет pack.session === [] то сервер не подтвердил авторизацию
         // и значит не производил обработку входящег пакета, и значит разрываем авторизацию
