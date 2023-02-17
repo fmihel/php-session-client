@@ -1,6 +1,6 @@
 {
   "name": "fmihel-php-session-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "client side for php-session",
   "main": "dist/fmihel-php-session-client.min.js",
   "scripts": {
